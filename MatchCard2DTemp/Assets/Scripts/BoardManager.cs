@@ -1,4 +1,5 @@
-﻿using Sirenix.OdinInspector;
+﻿using MatchCards;
+using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,8 +13,7 @@ public class BoardManager : SerializedMonoBehaviour
 
     Queue<Card> flippedCardsQueue = new Queue<Card>();
 
-    public Transform spawnPos; // Sửa thành RectTransform
-    public Vector2 startPos;
+    public RectTransform spawnPos; // Sửa thành RectTransform
     public Vector2 offset;
 
     private void Awake()
@@ -50,9 +50,9 @@ public class BoardManager : SerializedMonoBehaviour
     {
         var rows = 3;
         var columns = 2;
-        startPos = new Vector2(100, 420);
-        offset = new Vector2(200, 200);
-        var _starPos = spawnPos.position + new Vector3(15, -15,0); // Sử dụng anchoredPosition
+
+        offset = new Vector2(420, 420);
+        var _starPos = spawnPos.anchoredPosition + new Vector2(30, -30);
         SpawnCardMesh(rows, columns, _starPos, offset, 1);
         EventManager.EventRevealCard();
         GameManager.Instance.curDif = 0;
@@ -62,9 +62,9 @@ public class BoardManager : SerializedMonoBehaviour
     {
         var rows = 4;
         var columns = 3;
-        startPos = new Vector2(50, 520);
-        offset = new Vector2(125, 150);
-        var _starPos = spawnPos.position; // Sử dụng anchoredPosition
+
+        offset = new Vector2(420*0.6f, 420*0.7f);
+        var _starPos = spawnPos.anchoredPosition; 
         SpawnCardMesh(rows, columns, _starPos, offset, 0.9f);
         EventManager.EventRevealCard();
         GameManager.Instance.curDif = 1;
@@ -74,9 +74,9 @@ public class BoardManager : SerializedMonoBehaviour
     {
         var rows = 5;
         var columns = 4;
-        startPos = new Vector2(50, 520);
-        offset = new Vector2(85, 110);
-        var _starPos = spawnPos.position; // Sử dụng anchoredPosition
+
+        offset = new Vector2(420 * 0.4f, 420 * 0.5f);
+        var _starPos = spawnPos.anchoredPosition;
         SpawnCardMesh(rows, columns, _starPos, offset, 0.8f);
         EventManager.EventRevealCard();
         GameManager.Instance.curDif = 2;
@@ -116,9 +116,13 @@ public class BoardManager : SerializedMonoBehaviour
                 // Tính toán vị trí của mỗi thẻ
                 Vector2 cardPosition = Pos + new Vector2(col * offset.x, -row * offset.y);
 
-                // Tạo thẻ tại vị trí đã tính toán
-                GameObject cardObject = Instantiate(cardPrefab, cardPosition, Quaternion.identity, boardParent);
-                Card card = cardObject.GetComponent<Card>();
+                // Chuyển đổi từ không gian Canvas (anchoredPosition) sang không gian thế giới (world space)
+                Vector2 worldPosition = boardParent.TransformPoint(cardPosition);
+
+				// Tạo thẻ tại vị trí đã tính toán
+				//GameObject cardObject = Instantiate(cardPrefab, cardPosition, Quaternion.identity, boardParent);
+				GameObject cardObject = PoolManager.Spawn(cardPrefab, worldPosition, Quaternion.identity);
+				Card card = cardObject.GetComponent<Card>();
 
                 // Gán CardSO cho thẻ
                 card.Initialize(pairedCardSOs[cardIndex]);
@@ -131,6 +135,7 @@ public class BoardManager : SerializedMonoBehaviour
                 }
 
                 // Đăng ký sự kiện OnCardFlipped
+                card.OnCardFlipped -= OnCardFlipped;
                 card.OnCardFlipped += OnCardFlipped;
 
                 cardIndex++;
@@ -138,7 +143,6 @@ public class BoardManager : SerializedMonoBehaviour
         }
     }
 
-    // Hàm trộn ngẫu nhiên danh sách
     void ShuffleList<T>(List<T> list)
     {
         for (int i = list.Count - 1; i > 0; i--)
@@ -162,13 +166,16 @@ public class BoardManager : SerializedMonoBehaviour
         }
     }
 
+
+
+
     IEnumerator CheckMatch()
     {
-        yield return new WaitForSeconds(1f);
+
         // Lấy 2 thẻ từ hàng đợi
         Card card1 = flippedCardsQueue.Dequeue();
         Card card2 = flippedCardsQueue.Dequeue();
-
+        yield return new WaitForSeconds(1f);
         // Kiểm tra match
         if (card1.Matches(card2))
         {

@@ -28,9 +28,14 @@ public class Card : MonoBehaviour
 
 	private void Awake()
 	{
-        EventManager.EventRevealCard += RevealCard;
+
         cardBtn = GetComponent<Button>();
 	}
+	private void OnEnable()
+	{
+        EventManager.EventRevealCard += RevealCard;
+    }
+
 	// Start is called before the first frame update
 	void Start()
     {
@@ -84,12 +89,6 @@ public class Card : MonoBehaviour
         State = newState;
         UpdateVisuals();
     }
-    [Button]
-    void TestReveal()
-	{
-        State = CardState.Flipped;
-        UpdateVisuals();
-    }
 
     private void UpdateVisuals()
     {
@@ -111,8 +110,8 @@ public class Card : MonoBehaviour
                 frontFace.SetActive(true);
                 backFace.SetActive(false);
                 transform.DOShakeScale(0.5f).OnComplete(() => {
-                    //gameObject.SetActive(false);
-                    Destroy(gameObject);
+					gameObject.SetActive(false);
+					//Destroy(gameObject);
                 });
 
                 break;
