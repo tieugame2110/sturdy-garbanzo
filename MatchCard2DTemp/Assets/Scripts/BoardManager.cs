@@ -8,11 +8,11 @@ public class BoardManager : SerializedMonoBehaviour
     public static BoardManager Instance { get; private set; }
     public List<Card> cardInBoard = new();
     public GameObject cardPrefab;
-    public Transform boardParent;
+    public RectTransform boardParent; // Sửa thành RectTransform
 
     Queue<Card> flippedCardsQueue = new Queue<Card>();
 
-
+    public Transform spawnPos; // Sửa thành RectTransform
     public Vector2 startPos;
     public Vector2 offset;
 
@@ -31,8 +31,9 @@ public class BoardManager : SerializedMonoBehaviour
         // Khởi tạo board
         //CreateBoard();
     }
-	public void ClearAllCard()
-	{
+
+    public void ClearAllCard()
+    {
         if (cardInBoard.Count <= 0) return;
         // Duyệt qua tất cả các thẻ trong danh sách cardInBoard
         foreach (Card card in cardInBoard)
@@ -45,13 +46,14 @@ public class BoardManager : SerializedMonoBehaviour
         cardInBoard.Clear();
     }
 
-	public void EasyDif()
-	{
+    public void EasyDif()
+    {
         var rows = 3;
         var columns = 2;
         startPos = new Vector2(100, 420);
-        offset = new Vector2(150, 150);
-        SpawnCardMesh(rows, columns, startPos, offset, 1);
+        offset = new Vector2(200, 200);
+        var _starPos = spawnPos.position + new Vector3(15, -15,0); // Sử dụng anchoredPosition
+        SpawnCardMesh(rows, columns, _starPos, offset, 1);
         EventManager.EventRevealCard();
         GameManager.Instance.curDif = 0;
     }
@@ -62,7 +64,8 @@ public class BoardManager : SerializedMonoBehaviour
         var columns = 3;
         startPos = new Vector2(50, 520);
         offset = new Vector2(125, 150);
-        SpawnCardMesh(rows, columns, startPos, offset, 0.9f);
+        var _starPos = spawnPos.position; // Sử dụng anchoredPosition
+        SpawnCardMesh(rows, columns, _starPos, offset, 0.9f);
         EventManager.EventRevealCard();
         GameManager.Instance.curDif = 1;
     }
@@ -73,47 +76,85 @@ public class BoardManager : SerializedMonoBehaviour
         var columns = 4;
         startPos = new Vector2(50, 520);
         offset = new Vector2(85, 110);
-        SpawnCardMesh(rows, columns, startPos, offset, 0.8f);
+        var _starPos = spawnPos.position; // Sử dụng anchoredPosition
+        SpawnCardMesh(rows, columns, _starPos, offset, 0.8f);
         EventManager.EventRevealCard();
         GameManager.Instance.curDif = 2;
     }
 
     void SpawnCardMesh(int rows, int columns, Vector2 Pos, Vector2 offset, float scaleDownValue)
     {
+        // Clear tất cả card trước khi spawn
+        ClearAllCard();
+        var cardSOs = GameManager.Instance.cardSOs;
+
+        // Kiểm tra số lượng thẻ cần spawn
+        int totalCards = rows * columns;
+
+        // Tạo danh sách các cặp thẻ
+        List<CardSO> pairedCardSOs = new List<CardSO>();
+        for (int i = 0; i < totalCards / 2; i++)
+        {
+            // Lặp lại CardSO nếu cần để tạo đủ số cặp
+            pairedCardSOs.Add(cardSOs[i % cardSOs.Count]);
+        }
+
+        // Nhân đôi danh sách để tạo cặp
+        pairedCardSOs.AddRange(pairedCardSOs);
+
+        // Trộn ngẫu nhiên danh sách
+        ShuffleList(pairedCardSOs);
+
         // Duyệt qua số hàng và số cột để tạo các thẻ
+        int cardIndex = 0;
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < columns; col++)
             {
+                if (cardIndex >= totalCards) return; // Đảm bảo không vượt quá số lượng cần thiết
+
                 // Tính toán vị trí của mỗi thẻ
                 Vector2 cardPosition = Pos + new Vector2(col * offset.x, -row * offset.y);
 
                 // Tạo thẻ tại vị trí đã tính toán
                 GameObject cardObject = Instantiate(cardPrefab, cardPosition, Quaternion.identity, boardParent);
                 Card card = cardObject.GetComponent<Card>();
+
+                // Gán CardSO cho thẻ
+                card.Initialize(pairedCardSOs[cardIndex]);
                 cardInBoard.Add(card);
 
                 // Nếu muốn scale down thẻ (giảm kích thước)
                 if (scaleDownValue < 1)
                 {
-                    cardObject.transform.localScale = new Vector3(scaleDownValue, scaleDownValue, 1f); // Ví dụ giảm kích thước xuống 80%
+                    cardObject.transform.localScale = new Vector3(scaleDownValue, scaleDownValue, 1f);
                 }
 
                 // Đăng ký sự kiện OnCardFlipped
                 card.OnCardFlipped += OnCardFlipped;
+
+                cardIndex++;
             }
         }
     }
 
+    // Hàm trộn ngẫu nhiên danh sách
+    void ShuffleList<T>(List<T> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int randomIndex = Random.Range(0, i + 1);
+            (list[i], list[randomIndex]) = (list[randomIndex], list[i]);
+        }
+    }
 
-	void OnCardFlipped(Card card)
+    void OnCardFlipped(Card card)
     {
         // Nếu thẻ đã lật hoặc đã matched thì bỏ qua
         if (card.State == CardState.Flipped || card.State == CardState.Matched)
             return;
 
-		flippedCardsQueue.Enqueue(card);
-
+        flippedCardsQueue.Enqueue(card);
 
         if (flippedCardsQueue.Count % 2 == 0)
         {
@@ -154,11 +195,11 @@ public class BoardManager : SerializedMonoBehaviour
         }
     }
 
-	private void CheckEndGame()
-	{
-		if (cardInBoard.Count <= 0)
-		{
+    private void CheckEndGame()
+    {
+        if (cardInBoard.Count <= 0)
+        {
             GameManager.Instance.EndGame();
-		}
-	}
+        }
+    }
 }

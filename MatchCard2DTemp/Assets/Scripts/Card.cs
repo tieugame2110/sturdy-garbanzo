@@ -85,9 +85,9 @@ public class Card : MonoBehaviour
         UpdateVisuals();
     }
     [Button]
-    void TestMatched()
+    void TestReveal()
 	{
-        State = CardState.Matched;
+        State = CardState.Flipped;
         UpdateVisuals();
     }
 

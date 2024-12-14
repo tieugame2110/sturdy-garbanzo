@@ -48,6 +48,7 @@ public class GameManager : SerializedMonoBehaviour
 			ConstantManager.userData.highScore = playerScore;
 		}
 		ConstantManager.userData.SaveData();
+		SoundManager.Instance.PlaySound(SoundManager.Instance.endGameSound);
 	}
 	public void NextGame()
 	{
