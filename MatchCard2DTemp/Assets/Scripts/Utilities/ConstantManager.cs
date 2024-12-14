@@ -14,6 +14,7 @@ public class UserData
 {
 	public int highScore = 0;
 	public int lastScore = 0;
+	public int gameSound = 1;
 	public UserData()
 	{
 		//Chỗ này thừa, nếu nhét Load vào khởi tạo, thì khi deserialize string ra sẽ tiếp tục khởi tạo nữa tạo nên loop vô tận

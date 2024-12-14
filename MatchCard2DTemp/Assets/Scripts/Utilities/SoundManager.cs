@@ -24,9 +24,6 @@ public class SoundManager : MonoBehaviour
     public Sound endGameSound;
 
     private AudioSource audioSource;
-    private const string MUTE_PREF_KEY = "MutePreference";
-    private const int MUTED = 1;
-    private const int UN_MUTED = 0;
     private const string MUSIC_PREF_KEY = "MusicPreference";
     private const int MUSIC_OFF = 0;
     private const int MUSIC_ON = 1;
@@ -41,14 +38,12 @@ public class SoundManager : MonoBehaviour
         {
             Instance = this;
         }
+        audioSource = GetComponent<AudioSource>();
     }
     // Start is called before the first frame update
     void Start()
     {
-
-        audioSource = GetComponent<AudioSource>();
-
-        SetMute(IsMuted());
+        //SetMute(IsMuted());
     }
     public void PlayMusic(Sound music, bool loop = true)
     {
@@ -95,10 +90,6 @@ public class SoundManager : MonoBehaviour
     public void Stop()
     {
         audioSource.Stop();
-    }
-    public bool IsMuted()
-    {
-        return (PlayerPrefs.GetInt(MUTE_PREF_KEY, UN_MUTED) == MUTED);
     }
     public bool IsMusicOff()
     {

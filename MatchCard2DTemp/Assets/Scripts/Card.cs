@@ -14,8 +14,8 @@ public enum CardState
 }
 public class Card : MonoBehaviour
 {
-    public CardSO cardSO;
-    public int CardID { get; private set; }
+    [OnValueChanged("Initialize")]public CardSO cardSO;
+    public int CardID;
     public CardState State { get; private set; } = CardState.Hidden;
 
     [SerializeField] private GameObject frontFace;
@@ -24,14 +24,17 @@ public class Card : MonoBehaviour
     [SerializeField] private Image cardImage;
 
     public Action<Card> OnCardFlipped;
+    private Vector3 scaleMemory;
 
 	private void Awake()
 	{
+        EventManager.EventRevealCard += RevealCard;
         cardBtn = GetComponent<Button>();
 	}
 	// Start is called before the first frame update
 	void Start()
     {
+        scaleMemory = transform.localScale; 
         AddEventCardBtn();
     }
     void AddEventCardBtn()
@@ -53,8 +56,8 @@ public class Card : MonoBehaviour
     {
         if (State == CardState.Hidden)
         {
-            SetState(CardState.Flipped);
             OnCardFlipped?.Invoke(this);
+            SetState(CardState.Flipped);
             SoundManager.Instance.PlaySound(SoundManager.Instance.revealCard);
         }
     }
@@ -99,7 +102,7 @@ public class Card : MonoBehaviour
             case CardState.Flipped:
                 transform.DOScaleX(0, 0.5f).OnComplete(() => {
 
-                    transform.DOScaleX(1, 0.5f);
+                    transform.DOScaleX(scaleMemory.x, 0.5f);
                     frontFace.SetActive(true);
                     backFace.SetActive(false);
                 });
@@ -108,10 +111,22 @@ public class Card : MonoBehaviour
                 frontFace.SetActive(true);
                 backFace.SetActive(false);
                 transform.DOShakeScale(0.5f).OnComplete(() => {
-                    gameObject.SetActive(false);
+                    //gameObject.SetActive(false);
+                    Destroy(gameObject);
                 });
 
                 break;
         }
+    }
+    public void RevealCard()
+	{
+        State = CardState.Flipped;
+        frontFace.SetActive(true);
+        backFace.SetActive(false);
+        Invoke(nameof(FlipBack),3);
+    }
+	private void OnDisable()
+	{
+        EventManager.EventRevealCard -= RevealCard;
     }
 }
