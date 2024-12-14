@@ -122,6 +122,7 @@ public class Card : MonoBehaviour
         State = CardState.Flipped;
         frontFace.SetActive(true);
         backFace.SetActive(false);
+        CancelInvoke(nameof(FlipBack));
         Invoke(nameof(FlipBack),3);
     }
 	private void OnDisable()

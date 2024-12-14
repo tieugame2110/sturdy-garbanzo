@@ -39,7 +39,8 @@ public class BoardManager : SerializedMonoBehaviour
         foreach (Card card in cardInBoard)
         {
             // Hủy GameObject của thẻ khỏi scene
-            Destroy(card.gameObject);
+            //Destroy(card.gameObject);
+            card.gameObject.SetActive(false);
         }
 
         // Xóa tất cả các thẻ trong danh sách
